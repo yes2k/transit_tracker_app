@@ -1,0 +1,63 @@
+---
+title: "Untitled"
+format: html
+---
+
+
+
+```{python}
+import requests
+from xml.dom.minidom import parseString
+
+import pandas as pd
+```
+
+
+# Testing requests from go tracker
+```{python}
+url = "http://gotracker.ca/GoTracker/web/GODataAPIProxy.svc/TripLocation/Service/Lang/31/en?_=1663888486410"
+x = requests.get(url)
+
+document = parseString(x.content)
+out = document.getElementsByTagName("InServiceTripPublic")
+
+kitchener_trains = [] 
+for i in out:
+    kitchener_trains.append(dict(i.attributes.items()))
+
+print(len(kitchener_trains))
+
+
+x = map(lambda x: (x["EquipmentCode"], x["Latitude"], x["Longitude"]), kitchener_trains)
+print(list(x))
+
+```
+
+
+# Parsing station data
+
+```{python}
+go_train_lines = {
+    "kitchener": [],
+    "barrie": [],
+    "lakeshore_east": [],
+    "lakeshore_west": [],
+    "milton": [],
+    "richmond_hill": [],
+    "stouffville_line": []
+}
+
+go_train_stations = []
+
+with open("go_train_stops_on_routes") as file:
+    for line in file:
+        line_split = line.strip().split(",")
+        go_train_lines[line_split[0]] = line_split[1:]
+
+print(go_train_lines)
+
+
+
+stops_df = pd.read_csv("go_train_data/stops.txt")
+print(stops_df.head())
+```
