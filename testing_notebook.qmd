@@ -28,8 +28,7 @@ for i in out:
 print(len(kitchener_trains))
 
 
-x = map(lambda x: (x["EquipmentCode"], x["Latitude"], x["Longitude"]), kitchener_trains)
-print(list(x))
+kitchener_train_loc = list(map(lambda x: (x["EquipmentCode"], x["Latitude"], x["Longitude"]), kitchener_trains))
 
 ```
 
@@ -52,12 +51,57 @@ go_train_stations = []
 with open("go_train_stops_on_routes") as file:
     for line in file:
         line_split = line.strip().split(",")
-        go_train_lines[line_split[0]] = line_split[1:]
+        go_train_lines[line_split[0]] = [s.strip() for s in line_split[1:]]
 
 print(go_train_lines)
 
-
-
 stops_df = pd.read_csv("go_train_data/stops.txt")
 print(stops_df.head())
+stops_df = stops_df.set_index("stop_id")
+
+
+kitchener_lines = stops_df[stops_df.index.isin(go_train_lines["kitchener"])].reindex(['KI', 'GL', 'AC', 'GE', 'MO', 'BR', 'BE', 'MA', 'ET', 'WE', 'BL', 'UN'])
 ```
+
+
+```{python}
+def proj(x, y, x1, x2, y1, y2):
+    between_x = True
+    between_y = True
+    if x1 >= x2:
+        if not (x1 <= x and x <= x2):
+            between_x = False
+    else:
+        if not (x2 <= x and x <= x1):
+            between_x = False
+    
+    if y1 >= y2:
+        if not (y1 <= y and y <= y2):
+            between_y = False
+    else:
+        if not (y2 <= y and y <= y1):
+            between_y = False
+    
+    if (not between_x) and (not between_y):
+        raise("The Point is not between the bounds")
+
+    slope = (y2 - y1) / (x2 - x1)
+    y_int = y2 - (m * x2)
+
+    x_p = (x + (m*Y) - (m*y_int)) / (1 + m**2)
+    y_p = ((m*X) + ((m**2) * Y) + b) / (1 + m**2)
+    len_proj = sqrt((y - y_p)**2 + (x - x_p)**2)
+
+    return {
+        "proj": (x_p, y_p),
+        "proj_len": len_proj
+    }
+```
+
+
+```{python}
+for t in kitchener_train_loc:
+    for i in range(0, kitchener_lines.shape[0] - 1):
+        print(kitchener_lines.iloc[i]["stop_name"])
+```
+
